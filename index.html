@@ -979,6 +979,8 @@ const store = {
 const CLASS_LIST = ['小明', '小美', '小华', '小强', '小丽'];
 const SAMPLE = { A: CLASS_LIST, B: CLASS_LIST };
 const PRESET = { A: true, B: true };
+// 学生版（build.py --student 改成 true）：只有 5 只预设宠物，不能编辑名单
+const STUDENT = true;
 let uidSeq = 0;
 const newId = g => `${g}-${Date.now().toString(36)}-${(uidSeq++).toString(36)}`;
 const rosterOf = g => SAMPLE[g].map((n, i) => ({ id: newId(g), name: n, species: PET.KEYS[i % 4], points: 0 }));
@@ -996,6 +998,8 @@ let app = store.get();
 if (!app || app.v !== 1) app = { v: 1, group: 'B', lang: 'zh', slide: 0, sound: true, groups: { A: newClass('A'), B: newClass('B') } };
 // 这台电脑以前打开过、还留着旧示例名单的，换成预设名单；老师自己改过的名单不动
 ['A', 'B'].forEach(g => { const c = app.groups[g]; if (PRESET[g] && c && c.sample) { c.students = rosterOf(g); c.sample = false; } });
+// 学生版：名单被改过（早期版本还能编辑）就换回 5 只预设宠物
+if (STUDENT) ['A', 'B'].forEach(g => { const c = app.groups[g]; if (c && c.students.map(s => s.name).join() !== SAMPLE[g].join()) c.students = rosterOf(g); });
 const cls = () => app.groups[app.group];
 const save = () => store.set(app);
 const stageOf = (p, th) => { let s = 0; th.forEach((t, i) => { if (p >= t) s = i; }); return s; };
@@ -2825,7 +2829,8 @@ function bindGlobal() {
   $('#fsBtn').addEventListener('click', toggleFs);
   $('#allPlus').addEventListener('click', () => awardAll(1));
   $('#allMinus').addEventListener('click', () => awardAll(-1));
-  $('#editRoster').addEventListener('click', () => { renderRoster(); openOverlay('#rosterModal'); });
+  if (STUDENT) $('#editRoster').remove();
+  else $('#editRoster').addEventListener('click', () => { renderRoster(); openOverlay('#rosterModal'); });
   $('#evoOverlay').addEventListener('click', () => { $('#evoOverlay').hidden = true; });
   $('#petPanel').addEventListener('click', e => { if (e.target.id === 'petPanel') closeOverlay('#petPanel'); });
   $('#rosterModal').addEventListener('click', e => { if (e.target.id === 'rosterModal') { closeOverlay('#rosterModal'); renderAll(); } });
